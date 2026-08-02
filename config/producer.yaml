@@ -1,0 +1,53 @@
+generator:
+  # throughput_tps: 0.05 # 1 transaction per 20 seconds
+  throughput_tps: 1 # 1 transaction per second
+
+  duration_minutes: # runs forver, how long the generator runs
+  seed: 42 # generates consistently same transactions for each execution
+
+customers:
+  count: 200
+services:
+  wallet_load:
+    amount:
+      normal:
+        min: 100
+        max: 25000
+      distribution:
+        type: beta
+        alpha: 2 # 1, 1 means uniform 2,5 mostly small amounts,5,2 mostly large amounts
+        beta: 5
+
+  p2p:
+    amount:
+      normal:
+        min: 1000
+        max: 100000
+      distribution:
+        type: uniform
+  merch_pay:
+    amount:
+      normal:
+        min: 1
+        max: 25000
+      distribution:
+        type: triangular
+        # most generations are around 2000
+        mode: 2000
+fraud:
+  injection_probability: 0.1 #[0.0 - 1.0, eg. 0.01= 1% probability]
+  scenarios:
+    - type: account_takeover
+      weight: 40 # relative weight ( out of total weights)
+      params:
+        new_location_probability: 0.5
+        new_ip_probability: 0.4
+    - type: velocity_attack
+      weight: 30
+      params:
+        transaction_count: [5, 15]
+        interval_seconds: 60
+    - type: sim_swap
+      weight: 25
+      params:
+        new_device_probability: 0.2

@@ -1,0 +1,35 @@
+fraud_detection:
+  account_takeover:
+    services:
+      wallet_load:
+        min: 100
+        max: 25000
+
+      p2p:
+        min: 1000
+        max: 100000
+
+      merch_pay:
+        min: 1
+        max: 25000
+
+  velocity_attack:
+    transaction_count:
+      min: 5
+      max: 10
+
+    interval_seconds: 60
+
+  sim_swap:
+    services:
+      wallet_load:
+        min: 100
+        max: 25000
+
+      p2p:
+        min: 1000
+        max: 100000
+
+      merch_pay:
+        min: 1
+        max: 25000
