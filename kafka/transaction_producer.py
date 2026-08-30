@@ -13,7 +13,7 @@ class TransactionProducer(Producer):
     def publish(
         self,
         topic: str,
-        transaction_stream: Generator[Transaction],
+        transaction_stream: Generator[Transaction, None, None],
     ):
         try:
             for transaction in transaction_stream:
