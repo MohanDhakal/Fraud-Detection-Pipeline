@@ -1,3 +1,4 @@
 commit_standard.txt
 __pycache__/
 .venv/
+.env

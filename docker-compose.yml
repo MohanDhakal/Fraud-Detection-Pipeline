@@ -1,24 +1,57 @@
 services:
+
+  python:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fraud_detection-app
+    env_file:
+      - .env
+    environment: 
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "print('Python is healthy')"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 5s
+
+  postgres:
+    image: postgres:18
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
   kafka:
     image: apache/kafka:4.3.1
     container_name: kafka
     ports:
       - "9092:9092"
     environment:
-      # every kafka broker has a unique ID. Since we're running only one broker 1 is sufficient
+      # every kafka broker has a unique ID. Since we're running only one, broker 1 is sufficient
       # production require change
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker, controller
       # Kafka opens two network ports internally. 9092-> borker and 9093 -> controller
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093 # exposed port,
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       # PLAIN TCP PROTOCOL for local developement
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       # This tells Kafka where the controller lives.
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      # Kafka normally replicates data across multiple brokers.A replication factor of 3 means every message exists on all three brokers.
-      # since we only have one broker, replication factor is by default 1
+      # Kafka normally replicates data across multiple brokers.A replication factor of 3 means each parition has three replicas distributed across brokers.
+      # With one broker, replication factor must be 1.
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       # similary only 1 broker is available for state log for both settings below
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -27,4 +60,4 @@ services:
       # This helps in production when many consumers join around the same time.
       # For local development it's unnecessary, so setting it to 0 makes consumers start receiving messages immediately.
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_NUM_PARTITIONS: 3
