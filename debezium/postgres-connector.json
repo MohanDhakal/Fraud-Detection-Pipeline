@@ -1,0 +1,19 @@
+{
+    "name": "postgres-connector",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "database.hostname": "postgres",
+        "database.port": "5432",
+        "database.user": "debezium",
+        "database.password": "debezium_pass",
+        "database.dbname": "fraud_detection",
+        "topic.prefix": "postgres",
+        "plugin.name": "pgoutput",
+        "publication.name": "dbz_publication",
+        "schema.include.list": "public",
+        "table.include.list": "public.transaction",
+        "slot.name": "debezium",
+        "snapshot.mode": "initial",
+        "replica.identity.autoset.values": "public.transaction:DEFAULT"
+    }
+}

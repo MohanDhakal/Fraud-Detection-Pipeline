@@ -1,5 +1,84 @@
 services:
 
+
+  postgres:
+    image: postgres:18
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_wal_senders=5
+      - -c
+      - max_replication_slots=5
+  kafka:
+    image: apache/kafka:4.3.1
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # every kafka broker has a unique ID. Since we're running only one, broker 1 is sufficient
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker, controller
+      # Kafka opens two network ports internally. 9092-> borker and 9093 -> controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093 
+      # Kafka's exposed port for the broker
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      # user listener named CONTROLLER  for controller communication
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # PLAIN TCP PROTOCOL for local developement which means no encryption and no authentication
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      # kRaft controller uses a consensus mechanisms to agree on metadata changes.
+      # The controllers are therefore votes in the controller quorum,
+      # if one controller fails, other controller is selected as a leaders by voters available in the quorum
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      # Kafka normally replicates data across multiple brokers.A replication factor of 3 means each parition has three replicas distributed across brokers.
+      # With one broker, replication factor must be 1.
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1      
+      # Kafka uses this internal topic to persist transaction metadata/state.
+      # Kafka should create the transaction state topic with 1 copy (replica).
+      # Eg. Transaction ID: payment-service-01
+      # Status: ONGOING
+      # Partitions involved:
+      #     payments-0
+      #     notifications-2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      # ISR = In-Sync Replicas which are sufficiently caught up with the leader
+      # min.ISR = How many healthy copies must be available for writes to continue?
+      # current setup : Keep one copy of Kafka's transaction state, and require at least one in-sync copy to be available
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # Normally Kafka waits a few seconds before assigning partitions to consumers(consumer-group rebalance).
+      # This helps in production when many consumers join around the same time.
+      # Setting it to 0 makes consumers start receiving messages immediately.
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
+      # number of partitions per topic
+      KAFKA_NUM_PARTITIONS: 3
+
+  connect:
+    image: quay.io/debezium/connect:3.0
+    container_name: kafka-connect
+    ports:
+      - "8083:8083"
+    depends_on:
+      - kafka
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: connect-cluster
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-status
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
   python:
     build:
       context: .
@@ -7,6 +86,10 @@ services:
     container_name: fraud_detection-app
     env_file:
       - .env
+    depends_on:
+      - kafka
+      - postgres
+      - connect
     environment: 
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
@@ -19,45 +102,3 @@ services:
       timeout: 3s
       retries: 2
       start_period: 5s
-
-  postgres:
-    image: postgres:18
-    container_name: postgres
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-
-  kafka:
-    image: apache/kafka:4.3.1
-    container_name: kafka
-    ports:
-      - "9092:9092"
-    environment:
-      # every kafka broker has a unique ID. Since we're running only one, broker 1 is sufficient
-      # production require change
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker, controller
-      # Kafka opens two network ports internally. 9092-> borker and 9093 -> controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093 # exposed port,
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      # PLAIN TCP PROTOCOL for local developement
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      # This tells Kafka where the controller lives.
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      # Kafka normally replicates data across multiple brokers.A replication factor of 3 means each parition has three replicas distributed across brokers.
-      # With one broker, replication factor must be 1.
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      # similary only 1 broker is available for state log for both settings below
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      # Normally Kafka waits a few seconds before assigning partitions to consumers.
-      # This helps in production when many consumers join around the same time.
-      # For local development it's unnecessary, so setting it to 0 makes consumers start receiving messages immediately.
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_NUM_PARTITIONS: 3

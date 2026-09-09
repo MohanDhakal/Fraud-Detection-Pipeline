@@ -9,6 +9,7 @@ from kafka.consumers.fraud_detection_consumer import FraudDetectionConsumer
 from kafka.consumers.save_transaction_consumer import SaveTransactionConsumer
 from kafka.consumers.services.db_service import DBService
 from kafka.transaction_producer import TransactionProducer
+from kafka.consumers.cdc_consumer import CdcConsumer
 from transaction_generator import get_transaction
 import logging
 
@@ -74,18 +75,36 @@ def run_transaction_save_consumer():
     consumer.consume(conn)
 
 
+def run_cdc_consumer():
+    consumer = CdcConsumer(
+        bootstrap_server=FileLocation.kafka_bootstrap_server,
+        group_id="cdc-transaction-consumer",
+    )
+    consumer.consume_events(topic="postgres.public.transaction")
+
+
 if __name__ == "__main__":
     message = """What do you want to run ?
     --------------------------------------
         1. Producer for topic transactions(Enter 1)
         2. Fraud Detection Consumer for topic transactions(Enter 2)
         3. Save Transaction Consumer for topic transactions(Enter 3)
+        4. Cdc Consumer For Topic cdc-transaction-consumer (Enter 4)
         """
-    option = int(input(message))
-    match (option):
+    try:
+        option = int(input(message))
+    except ValueError:
+        print("Invalid option. Please enter a number.")
+        exit(1)
+    if option not in range(1, 5):
+        print("Undefined Run Code, Exiting...")
+        exit(1)
+    match option:
         case 1:
             run_producer()
         case 2:
             run_fraud_consumer()
         case 3:
             run_transaction_save_consumer()
+        case 4:
+            run_cdc_consumer()

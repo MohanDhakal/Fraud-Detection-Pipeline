@@ -1,0 +1,85 @@
+-------------- database configuration management -----------------
+
+1. First check the wal_level and set wal_level to logical if not already( needed to accesss WriteAhead Log)
+    SET wal_level = logical;
+2. set max_wal_senders
+    NOTE: WAL sender is a postgresql server process that sends WAL data to a replication client
+    max_wal_senders = count ( it means the maximum number of WAL sender processes that PostgreSQL can have simulatenously)
+3. set max_replication_slots
+    NOTE: A replication slot is a PostgreSQL mechanism that remembers how far a replication consumer has progressed through the WAL stream. 
+    the replication slot here remembers the required position
+    max_replication_slots specifies how many slots can exists in the postgres db
+
+
+
+-------------- database access/permission management ------------------
+1. create a new user for cdc
+user- debezium and pass- debezium_pass
+2. grant connect permission to the database
+GRANT CONNECT ON DATABASE db_name to debezium
+3. grant replication permission to the new user
+ALTER ROLE debezium with REPLICATION;
+4. grant schema navigation access( this doesn't grant read acess to any data inside the tables)
+GRANT USAGE ON SCHEMA public TO debezium;
+5. grant select on required and tables for snapshots
+GRANT SELECT ON TABLE public.transaction TO debezium;
+6. Configure publication access  with least priviliges
+CREATE PUBLICATION dbz_publication FOR TABLE public.transaction;
+--------above steps are perfomed during docker initialization---------------------
+
+--------Manual  Verification------------------
+
+After completing above steps verify through docker.
+
+    1. connect to postgres
+        docker exec -it postgres psql -U postgres
+    2. check wal_level and max_replication_slots
+        show wal_level
+        show max_replication_slots
+    3. verify the role debezium has Replication role assigned
+        \du debezium
+    4. verify debezium has CONNECT permission on fraud_detection db
+        SELECT has_database_privilege('debezium','fraud_detection', 'CONNECT')
+    5. verify schema usage by debezium
+        SELECT has_schema_privilege('debezium', 'public','USAGE');
+    6. verify select on transaction
+        SELECT has_table_privilege('debezium','public.transaction','SELECT')
+    8. verify publication
+        select pubname,puballtables from pg_publication;
+    7. verify publication from transaction tables( should see dbz_publication as pubname and relname transaction with nspname public)
+       SELECT p.pubname, n.nspname, c.relname FROM pg_publication p JOIN pg_publication_rel pr ON p.oid = pr.prpubid JOIN pg_class c ON c.oid = pr.prrelid JOIN pg_namespace n ON n.oid = c.relnamespace;
+
+-- Now Setup Kafka Connect which is a consumer for debezium.
+
+    1. Add a folder and a .json file with connector configuration. for eg. debezium/postgres-connector.json
+    2. Veify the connection with curl http://localhost:8083/ and /connector-plugins
+    3. Now Register the connector to the Kafka connect.(From root folder)
+       curl -X POST -H "Content-Type: application/json" --data "@debezium/postgres-connector.json" http://localhost:8083/connectors
+    4. Check Connector Status
+        curl http://localhost:8083/connectors/postgres-connector/status
+    5. Add first message to the table to activate the kafka topic
+        docker exec -it postgres psql postgres -U postgres -d fraud_detection 
+        eg. INSERT INTO transaction
+            (
+            id,
+            customer_id, amount, timestamp, location_name, ip_address,
+            currency,device_id, is_fraud, fraud_type, service_name
+            )VALUES (
+            1,
+            '12345987jdkjiadfadf',
+            1290.32,
+            '2025-02-04',
+            12345,
+            '12.09.273.012',
+            'NPR',
+            'mydevice_id_iphone_11',
+            false,
+            'account_takeover',
+            'merch_pay'
+            )
+
+    6. Check kafka topics from the kafka container
+        docker exec -it kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list
+    7. run consumer program to display the message received on kafka topics
+        docker exec -it fraud_detection-app python3 src/main.py
+
