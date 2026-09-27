@@ -1,0 +1,21 @@
+How to run?
+1. Clone this repository to your machine.
+2. Then make sure you've docker installed in your machine
+3. Enter the root directory and run docker compose up and Verify all required containers are up and running with docker ps
+4. Veify the connection with debezium connector using  curl http://localhost:8083/ and /connector-plugins
+Expect something like this: {"version":"3.9.0","commit":"a60e31147e6b01ee","kafka_cluster_id":"5L6g3nShT-eMCtK--X86sw"}
+5. Now Register the connector to the Kafka connect.(From root folder)
+       curl -X POST -H "Content-Type: application/json" --data "@debezium/postgres-connector.json" http://localhost:8083/connectors
+6. Check connector status and verify data with the data inside debezium/postgres-connector.json file
+    curl http://localhost:8083/connectors/postgres-connector/status
+    Expect- connector -state running
+            taks -contains state running 
+7. Now run producer 1, Consumer 1 and Consumer 2 using main file, choose specified option as below.    
+    
+   Producer 1-  docker exec -it fraud_detection-app python3 src/main.py
+    First Terminal - Enter 1
+    Second Terminal - Enter 3
+    After making sure 1 and 3 runs,then only proceed
+    Third Terminal - Enter 4
+    
+8. Now you have your setup ready, you can check the logs if any fraud transaction has been detected, as show in the screenshot below

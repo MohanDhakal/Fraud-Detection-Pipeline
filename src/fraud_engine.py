@@ -23,22 +23,29 @@ class FraudEngine:
         current_probability = random.random()
         if current_probability > probability:
             return [transaction]
-        scene_config = random.choice(self.config.scenarios)
+        choice_weights = []
+        for scenario in self.config.scenarios:
+            choice_weights.append(scenario.weight)
+        scene_config = random.choices(
+            self.config.scenarios,
+            weights=choice_weights,
+            k=1,
+        )[0]
         filtered_transactions: list[Transaction] = []
         if scene_config.type == "account_takeover":
             filtered_transactions = AccountTakeover(
-                producer_fraud_config=scene_config,
+                producer_fraud_config=scene_config
             ).generate(
                 transaction=transaction,
                 current_prob=current_probability,
             )
         elif scene_config.type == "velocity_attack":
             filtered_transactions = VelocityAttack(
-                producer_fraud_config=scene_config,
+                producer_fraud_config=scene_config
             ).generate(transaction=transaction)
         elif scene_config.type == "sim_swap":
             filtered_transactions = SimSwap(
-                producer_fraud_config=scene_config,
+                producer_fraud_config=scene_config
             ).generate(
                 transaction=transaction,
                 current_prob=current_probability,

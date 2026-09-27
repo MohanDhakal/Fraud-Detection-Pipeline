@@ -1,0 +1,318 @@
+Kafka Value:
+{
+    "schema": {
+        "type": "struct",
+        "fields": [
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "string",
+                        "optional": false,
+                        "field": "id"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "customer_id"
+                    },
+                    {
+                        "type": "bytes",
+                        "optional": true,
+                        "name": "org.apache.kafka.connect.data.Decimal",
+                        "version": 1,
+                        "parameters": {
+                            "scale": "0",
+                            "connect.decimal.precision": "19"
+                        },
+                        "field": "amount"
+                    },
+                    {
+                        "type": "int64",
+                        "optional": true,
+                        "name": "io.debezium.time.MicroTimestamp",
+                        "version": 1,
+                        "field": "timestamp"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "location_name"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "ip_address"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "currency"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "device_id"
+                    },
+                    {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "is_fraud"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "fraud_type"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "service_name"
+                    }
+                ],
+                "optional": true,
+                "name": "postgres.public.transaction.Value",
+                "field": "before"
+            },
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "string",
+                        "optional": false,
+                        "field": "id"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "customer_id"
+                    },
+                    {
+                        "type": "bytes",
+                        "optional": true,
+                        "name": "org.apache.kafka.connect.data.Decimal",
+                        "version": 1,
+                        "parameters": {
+                            "scale": "0",
+                            "connect.decimal.precision": "19"
+                        },
+                        "field": "amount"
+                    },
+                    {
+                        "type": "int64",
+                        "optional": true,
+                        "name": "io.debezium.time.MicroTimestamp",
+                        "version": 1,
+                        "field": "timestamp"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "location_name"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "ip_address"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "currency"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "device_id"
+                    },
+                    {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "is_fraud"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "fraud_type"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "service_name"
+                    }
+                ],
+                "optional": true,
+                "name": "postgres.public.transaction.Value",
+                "field": "after"
+            },
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "string",
+                        "optional": false,
+                        "field": "version"
+                    },
+                    {
+                        "type": "string",
+                        "optional": false,
+                        "field": "connector"
+                    },
+                    {
+                        "type": "string",
+                        "optional": false,
+                        "field": "name"
+                    },
+                    {
+                        "type": "int64",
+                        "optional": false,
+                        "field": "ts_ms"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "name": "io.debezium.data.Enum",
+                        "version": 1,
+                        "parameters": {
+                            "allowed": "true,first,first_in_data_collection,last_in_data_collection,last,false,incremental"
+                        },
+                        "default": "false",
+                        "field": "snapshot"
+                    },
+                    {
+                        "type": "string",
+                        "optional": false,
+                        "field": "db"
+                    },
+                    {
+                        "type": "string",
+                        "optional": true,
+                        "field": "sequence"
+                    },
+                    {
+                        "type": "int64",
+                        "optional": true,
+                        "field": "ts_us"
+                    },
+                    {
+                        "type": "int64",
+                        "optional": true,
+                        "field": "ts_ns"
+                    },
+                    {
+                        "type": "string",
+                        "optional": false,
+                        "field": "schema"
+                    },
+                    {
+                        "type": "string",
+                        "optional": false,
+                        "field": "table"
+                    },
+                    {
+                        "type": "int64",
+                        "optional": true,
+                        "field": "txId"
+                    },
+                    {
+                        "type": "int64",
+                        "optional": true,
+                        "field": "lsn"
+                    },
+                    {
+                        "type": "int64",
+                        "optional": true,
+                        "field": "xmin"
+                    }
+                ],
+                "optional": false,
+                "name": "io.debezium.connector.postgresql.Source",
+                "field": "source"
+            },
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "string",
+                        "optional": false,
+                        "field": "id"
+                    },
+                    {
+                        "type": "int64",
+                        "optional": false,
+                        "field": "total_order"
+                    },
+                    {
+                        "type": "int64",
+                        "optional": false,
+                        "field": "data_collection_order"
+                    }
+                ],
+                "optional": true,
+                "name": "event.block",
+                "version": 1,
+                "field": "transaction"
+            },
+            {
+                "type": "string",
+                "optional": false,
+                "field": "op"
+            },
+            {
+                "type": "int64",
+                "optional": true,
+                "field": "ts_ms"
+            },
+            {
+                "type": "int64",
+                "optional": true,
+                "field": "ts_us"
+            },
+            {
+                "type": "int64",
+                "optional": true,
+                "field": "ts_ns"
+            }
+        ],
+        "optional": false,
+        "name": "postgres.public.transaction.Envelope",
+        "version": 2
+    },
+    "payload": {
+        "before": null,
+        "after": {
+            "id": "0ff40034-ea9c-429a-bba0-1b6bad8dc97c",
+            "customer_id": "584b4a76-a7b3-4970-a0ae-a67bbcb24593",
+            "amount": "AUUw",
+            "timestamp": 1697015244879000,
+            "location_name": "Birgunj (Parsa)",
+            "ip_address": "126.167.172.249",
+            "currency": "NPR",
+            "device_id": "fe81f56d-bf89-4a03-bdfd-ddc90d8f5221",
+            "is_fraud": null,
+            "fraud_type": null,
+            "service_name": "wallet_load"
+        },
+        "source": {
+            "version": "3.0.8.Final",
+            "connector": "postgresql",
+            "name": "postgres",
+            "ts_ms": 1790435031766,
+            "snapshot": "false",
+            "db": "fraud_detection",
+            "sequence": "[\"29437432\",\"29437432\"]",
+            "ts_us": 1790435031766956,
+            "ts_ns": 1790435031766956000,
+            "schema": "public",
+            "table": "transaction",
+            "txId": 818,
+            "lsn": 29437432,
+            "xmin": null
+        },
+        "transaction": null,
+        "op": "c",
+        "ts_ms": 1790435031999,
+        "ts_us": 1790435031999136,
+        "ts_ns": 1790435031999136532
+    }
+}

@@ -14,9 +14,8 @@ services:
         min: 100
         max: 25000
       distribution:
-        type: beta
-        alpha: 2 # 1, 1 means uniform 2,5 mostly small amounts,5,2 mostly large amounts
-        beta: 5
+        type: triangular
+        mode: 1000
 
   p2p:
     amount:
@@ -31,9 +30,10 @@ services:
         min: 1
         max: 25000
       distribution:
-        type: triangular
-        # most generations are around 2000
-        mode: 2000
+        type: beta
+        alpha: 2
+        beta: 5
+        # most generations are around 1000
 fraud:
   injection_probability: 0.1 #[0.0 - 1.0, eg. 0.01= 1% probability]
   scenarios:
@@ -48,6 +48,6 @@ fraud:
         transaction_count: [5, 15]
         interval_seconds: 60
     - type: sim_swap
-      weight: 25
+      weight: 30
       params:
         new_device_probability: 0.2

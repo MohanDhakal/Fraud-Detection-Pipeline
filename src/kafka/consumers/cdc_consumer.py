@@ -1,5 +1,7 @@
 from confluent_kafka import Consumer, KafkaException
 import json
+import base64
+from decimal import Decimal
 
 
 class CdcConsumer(Consumer):
@@ -39,24 +41,50 @@ class CdcConsumer(Consumer):
                     raise KafkaException(msg.error())
 
                 # Kafka message key -> Python object
-                key = self._decode_kafka_data(msg.key())
+                # key = self._decode_kafka_data(msg.key())
 
                 # Kafka message value -> Python dict
-                value = self._decode_kafka_data(msg.value())
+                event = self._decode_kafka_data(msg.value())
 
-                print("=" * 80)
+                # print("\nKafka Key:")
+                # print(json.dumps(key, indent=4))
+                payload = event.get("payload", event)
+                operation = payload.get("op")
 
-                print(f"Topic     : {msg.topic()}")
-                print(f"Partition : {msg.partition()}")
-                print(f"Offset    : {msg.offset()}")
+                if operation in ("c", "u"):
+                    transaction = payload.get("after")
+                    if transaction["is_fraud"]:
+                        print("=" * 80)
 
-                print("\nKafka Key:")
-                print(json.dumps(key, indent=4))
+                        print(f"Topic     : {msg.topic()}")
+                        print(f"Partition : {msg.partition()}")
+                        print(f"Offset    : {msg.offset()}")
 
-                print("\nKafka Value:")
-                print(json.dumps(value, indent=4))
+                        raw_bytes = base64.b64decode(transaction["amount"])
+                        unscaled = int.from_bytes(
+                            raw_bytes, byteorder="big", signed=True
+                        )
+                        amount = Decimal(unscaled)
+                        record = {
+                            "id": transaction["id"],
+                            "customer_id": transaction["customer_id"],
+                            "amount": amount,
+                            "timestamp": transaction["timestamp"],
+                            "location_name": transaction["location_name"],
+                            "ip_address": transaction["ip_address"],
+                            "currency": transaction["currency"],
+                            "device_id": transaction["device_id"],
+                            "is_fraud": transaction["is_fraud"],
+                            "fraud_type": transaction["fraud_type"],
+                            "service_name": transaction["service_name"],
+                        }
 
-                print("=" * 80)
+                        print(record)
+                        print("=" * 80)
+                    else:
+                        print(
+                            f'Transaction {transaction["id"]} and Fraud Type {transaction['service_name']}'
+                        ),
 
         except KeyboardInterrupt:
             print("\nStopping consumer...")

@@ -10,7 +10,7 @@ from data.merchants_data_provider import MerchantsDataProvider
 from data.nepal_data_provider import NepalDataProvider
 from data.third_party_data_provider import ThirdPartyDataProvider
 from data.wallet_data_provider import WalletDataProvider
-from schemas.services import P2P, MerchPay, Services, WalletLoad
+from schemas.services import P2P, MerchPay, WalletLoad
 from config.producer_config import (
     WalletLoadConfig,
     P2PConfig,
@@ -39,7 +39,6 @@ class ServiceBuilder:
             return self.wallet_load_instance(), self._build_load_amount(amount_config)
         elif class_name is P2PConfig:
             amount_config = config.services.p2p.amount
-
             return self.p2p_instance(), self._build_load_amount(amount_config)
         elif class_name is MerchPayConfig:
             amount_config = config.services.merch_pay.amount
