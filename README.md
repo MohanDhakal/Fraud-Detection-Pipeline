@@ -32,7 +32,7 @@ docker compose version
 From the root directory of the project, start the required services:
 
 ```bash
-docker compose up -d
+docker compose up --build -d
 ```
 
 Verify that all required containers are running:
