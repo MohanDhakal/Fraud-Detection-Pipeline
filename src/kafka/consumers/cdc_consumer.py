@@ -1,7 +1,17 @@
+from typing import Any
+
 from confluent_kafka import Consumer, KafkaException
 import json
 import base64
 from decimal import Decimal
+
+from kafka.consumers.services.cloud_service import CloudService, logger
+
+
+class CloudUploadException(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
 
 
 class CdcConsumer(Consumer):
@@ -30,6 +40,9 @@ class CdcConsumer(Consumer):
         self.consumer.subscribe([topic])
         print(f"Listening to: {topic}")
         print("Waiting for PostgreSQL changes...\n")
+        aws_cloud = CloudService()
+        s3_client = CloudService.setup_s3_client()
+
         try:
             while True:
                 msg = self.consumer.poll(1.0)
@@ -51,7 +64,10 @@ class CdcConsumer(Consumer):
                 payload = event.get("payload", event)
                 operation = payload.get("op")
 
-                if operation in ("c", "u"):
+                # printing the results
+
+                if operation in ("c", "u", "d"):
+                    transaction_without_read = payload
                     transaction = payload.get("after")
                     if transaction["is_fraud"]:
                         print("=" * 80)
@@ -80,14 +96,37 @@ class CdcConsumer(Consumer):
                         }
 
                         print(record)
+
                         print("=" * 80)
                     else:
                         print(
                             f'Transaction {transaction["id"]} and Fraud Type {transaction['service_name']}'
                         ),
-
+                    # sending whole payload to the cloud
+                self.upload_to_cloud(
+                    record=transaction_without_read,
+                    s3_client=s3_client,
+                    aws_service=aws_cloud,
+                )
+        except CloudUploadException as e:
+            print(f"\nCloud Upload Failed with ... :{e.message}")
         except KeyboardInterrupt:
-            print("\nStopping consumer...")
-
+            print("\nStopping consumer due to keyboard interruption...")
         finally:
             self.consumer.close()
+
+    def upload_to_cloud(
+        self,
+        record: dict[str, Any],
+        aws_service: CloudService,
+        s3_client,
+    ):
+        response = aws_service.upload_to_s3(
+            table_name="cdc_transactions",
+            client=s3_client,
+            data=record,
+        )
+        if response.get("error") is not None:
+            raise CloudUploadException(message=response.get("error"))
+        if response.get("msg") is not None:
+            logger.info(f"MetaData: ${response.get('msg')}")

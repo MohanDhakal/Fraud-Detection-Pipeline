@@ -1,5 +1,5 @@
 generator:
-  throughput_tps: 0.1 # 1 transaction per 10 seconds
+  throughput_tps: 0.02 # 1 transaction per 50 seconds
   # throughput_tps: 1 # 1 transaction per second
 
   duration_minutes: # runs forver, how long the generator runs

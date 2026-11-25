@@ -41,7 +41,8 @@ services:
       # The controllers are therefore votes in the controller quorum,
       # if one controller fails, other controller is selected as a leaders by voters available in the quorum
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      # Kafka normally replicates data across multiple brokers.A replication factor of 3 means each parition has three replicas distributed across brokers.
+      # Kafka normally replicates data across multiple brokers.
+      # A replication factor of 3 means each parition has three replicas distributed across brokers.
       # With one broker, replication factor must be 1.
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1      
       # Kafka uses this internal topic to persist transaction metadata/state.
@@ -62,7 +63,6 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
       # number of partitions per topic
       KAFKA_NUM_PARTITIONS: 3
-
   connect:
     image: quay.io/debezium/connect:3.0
     container_name: kafka-connect
@@ -79,6 +79,7 @@ services:
       CONFIG_STORAGE_REPLICATION_FACTOR: 1
       OFFSET_STORAGE_REPLICATION_FACTOR: 1
       STATUS_STORAGE_REPLICATION_FACTOR: 1
+
   python:
     build:
       context: .
@@ -95,7 +96,14 @@ services:
       POSTGRES_PORT: 5432
       KAFKA_HOST: kafka
       KAFKA_PORT: 9092
-
+      AWS_PROFILE: cdc-uploader
+      AWS_REGION:  ap-southeast-2
+      AWS_DEFAULT_REGION:  ap-southeast-2
+      AWS_SHARED_CREDENTIALS_FILE: /aws-config/credentials
+      AWS_CONFIG_FILE: /aws-config/config
+      AWS_PAGER: ""
+    volumes:
+      - ${HOME}/.aws:/aws-config:ro
     healthcheck:
       test: ["CMD", "python", "-c", "print('Python is healthy')"]
       interval: 5s
